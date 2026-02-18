@@ -1,0 +1,29 @@
+{
+  "noteFolderPath": "LINE",
+  "vaultId": "Obsidian_Katosumi",
+  "lineUserId": "Uda006a3bcc48323a59fc66b377b1ebf4",
+  "autoSync": true,
+  "syncInterval": 2,
+  "syncOnStartup": true,
+  "organizeByDate": false,
+  "fileNameTemplate": "{date}-{messageId}",
+  "e2eeEnabled": true,
+  "groupMessagesByDate": true,
+  "groupedMessageTemplate": "{time}: {text}",
+  "groupedFrontmatterTemplate": "source: LINE\ndate: {date}",
+  "groupedFileNameTemplate": "{date}",
+  "syncImages": true,
+  "imageFolderPath": "LINE/images",
+  "imageFileNameTemplate": "{date}-{messageId}",
+  "subscriptionStatus": "free",
+  "imageCount": 0,
+  "freeLimit": 10,
+  "encryptionKeys": {
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzS3CnVl7yws1kbB/1did\nOV7DHNO3EJ/Onolbs1kY0Tzd5Rlnt+NplMbmc6rgNtX3lHzuR/NDvBDaJxjG0Ia5\nrf84cohFSEHz+liwtxT2Or/o3azQ+3Dc/GDmRny9W5ykPCAXdEui/NrAs0U0o8Mr\n2A+4EBh3ovrohH1Zjh5mX3Tcx4XwrQjs9HBZhkH0zInRE3xhLY+PqnqGc8Ck+gDi\nZu9AtZHmZNxwIs6vlctEuWrpd083tLKBfjA4TdkuxZkC2aWLyEXWwyAtTvdDBBlj\nD3yNcWWa8KniQayUEPZUWEAkAOS4SrbINsWbx1gIqAms9sjr1fD78YcyNqosCWY3\nQQIDAQAB\n-----END PUBLIC KEY-----",
+    "encryptedPrivateKey": "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",
+    "deviceId": "uddOW9kiAUVqanaIn02kW4EcRpCq1EdOGewPRJs32W4=",
+    "keyId": "790407a3-de22-4a52-af97-2f06f265fe74",
+    "createdAt": 1771417928018,
+    "salt": "uNcL+45+gmWJ4XlBy0ARGQ=="
+  }
+}

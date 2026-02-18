@@ -1,0 +1,11 @@
+{
+  "amazonRegion": "japan",
+  "highlightsFolder": "35_Resource/Kindle_Highlights",
+  "lastSyncMode": "amazon",
+  "hasStartedSync": true,
+  "isLoggedIn": true,
+  "syncOnBoot": true,
+  "downloadBookMetadata": true,
+  "ignoredBooks": [],
+  "lastSyncDate": "2026-02-18T12:31:20.000Z"
+}
