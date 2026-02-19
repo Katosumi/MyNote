@@ -12,9 +12,9 @@ It is automatically synced using the [Obsidian Git](https://github.com/denolehov
 - **.obsidian**: Configuration files for Obsidian (plugins, themes, etc.).
 
 ## Synchronization
-- **Commit Interval**: 10 minutes (Local history)
-- **Push Interval**: 30 minutes (Cloud backup)
-- **Pull Interval**: 1 minute (Sync on startup/interval)
+- **Commit Interval**: 30 minutes (Local history)
+- **Push Interval**: 60 minutes (Cloud backup)
+- **Pull Interval**: 10 minute (Sync on startup/interval)
 
 ## Usage
 1. Clone this repository.
