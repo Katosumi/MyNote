@@ -1,3 +1,4 @@
+import sys
 import os
 import json
 import ssl
@@ -9,9 +10,10 @@ import datetime
 NOTION_TOKEN = "NOTION_TOKEN_REMOVED"
 # ArchiveページのID
 ARCHIVE_PAGE_ID = "c39708cb56ba43918718f8515e4964d7"
-# 抽出したテキストファイルのパス（スクリプトと同じフォルダにある前提）
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARCHIVE_TEXT_PATH = os.path.join(BASE_DIR, "archive_text.txt")
+DRAFT_DIR = "/Users/dezakihome/Documents/Obsidian/MyNote/10_Inbox/Buntore_Draft"
 
 def get_gemini_key():
     key = os.environ.get("GEMINI_API_KEY")
@@ -19,8 +21,6 @@ def get_gemini_key():
         print("💡 初回起動：Google GeminiのAPIキー（無料）が必要です。")
         print("取得先: https://aistudio.google.com/app/apikey （Googleアカウントでログインして作成）")
         key = input("👉 取得したGemini APIキーをペーストしてください: ").strip()
-        
-        # 次回から入力しなくて済むよう、Mac(.zshrc等)に設定することをおすすめするメッセージ
         print("\n※毎回入力が面倒な場合は、ターミナルで以下を実行して環境変数に設定してください。")
         print(f"  echo 'export GEMINI_API_KEY=\"{key}\"' >> ~/.zshrc && source ~/.zshrc\n")
     return key
@@ -86,6 +86,42 @@ def generate_text(theme, content, api_key):
         print(f"❌ 文章生成に失敗しました: {e}")
         return None
 
+def save_draft(title, body):
+    os.makedirs(DRAFT_DIR, exist_ok=True)
+    now = datetime.datetime.now()
+    filename = now.strftime("%Y-%m-%d_%H%M%S") + ".md"
+    filepath = os.path.join(DRAFT_DIR, filename)
+    
+    content = f"---\ntitle: {title}\n---\n{body}"
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(content)
+        
+    print(f"\n✅ 下書きを保存しました！\n👉 Obsidianで確認・修正してください: {filepath}")
+    return filepath
+
+def read_draft(filepath):
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    title = "無題"
+    body = content
+    # フロントマター (YAML) の簡易パース
+    if content.startswith("---"):
+        parts = content.split("---", 2)
+        if len(parts) >= 3:
+            frontmatter = parts[1]
+            body = parts[2].strip()
+            for line in frontmatter.split("\n"):
+                if line.startswith("title:"):
+                    title = line.replace("title:", "").strip()
+                    if title.startswith('"') and title.endswith('"'):
+                        title = title[1:-1]
+                    elif title.startswith("'") and title.endswith("'"):
+                        title = title[1:-1]
+                    break
+    return title, body
+
+
 def save_to_notion(title, body):
     print("\n📝 Notionへ自動保存しています...")
     url = f"https://api.notion.com/v1/blocks/{ARCHIVE_PAGE_ID}/children"
@@ -102,23 +138,15 @@ def save_to_notion(title, body):
     # 複数段落の対応（改行で分割してparagraphの配列を作成）
     body_paragraphs = body.split("\n")
     
-    # 子ブロックとして、タイトルと本文を追加
-    children_blocks = [
-        {
-            "object": "block",
-            "type": "heading_3",
-            "heading_3": {
-                "rich_text": [{"type": "text", "text": {"content": heading_text}}],
-                "color": "blue_background"
-            }
-        },
+    # トグルブロックの中に入る子ブロックたち
+    toggle_children = [
         {
             "object": "block",
             "type": "paragraph",
             "paragraph": {
                 "rich_text": [
-                    {"type": "text", "text": {"content": "◽️要約(" + str(len(title)) + "文字)\n"}, "annotations": {"bold": True}},
-                    {"type": "text", "text": {"content": title}}
+                    {"type": "text", "text": {"content": f"◽️要約({len(title)}文字)"}, "annotations": {"bold": True, "color": "gray_background"}},
+                    {"type": "text", "text": {"content": f"\n{title}"}}
                 ]
             }
         },
@@ -127,7 +155,7 @@ def save_to_notion(title, body):
             "type": "paragraph",
             "paragraph": {
                 "rich_text": [
-                    {"type": "text", "text": {"content": "◽️本文(" + str(len(body.replace('\n','').replace('▼',''))) + "文字)\n"}, "annotations": {"bold": True}},
+                    {"type": "text", "text": {"content": f"◽️本文({len(body.replace(chr(10),'').replace('▼',''))}文字)"}, "annotations": {"bold": True, "color": "gray_background"}}
                 ]
             }
         }
@@ -136,7 +164,7 @@ def save_to_notion(title, body):
     # 本文をパラグラフごとにブロックとして追加
     for para in body_paragraphs:
         if para.strip() == "▼":
-            children_blocks.append({
+            toggle_children.append({
                 "object": "block",
                 "type": "paragraph",
                 "paragraph": {
@@ -144,20 +172,31 @@ def save_to_notion(title, body):
                 }
             })
         elif para.strip():
-            children_blocks.append({
+            toggle_children.append({
                 "object": "block",
                 "type": "paragraph",
                 "paragraph": {
                     "rich_text": [{"type": "text", "text": {"content": para}}]
                 }
             })
-            
-    # 区切り線
-    children_blocks.append({
-        "object": "block",
-        "type": "divider",
-        "divider": {}
-    })
+
+    # 親ブロック（トグルの中に全てを入れる）
+    children_blocks = [
+        {
+            "object": "block",
+            "type": "toggle",
+            "toggle": {
+                "rich_text": [{"type": "text", "text": {"content": heading_text}}],
+                "color": "default",
+                "children": toggle_children
+            }
+        },
+        {
+            "object": "block",
+            "type": "divider",
+            "divider": {}
+        }
+    ]
 
     payload = {
         "children": children_blocks
@@ -175,9 +214,21 @@ def save_to_notion(title, body):
         print(f"❌ Notionへの保存に失敗しました: {e}")
 
 
-import sys
-
 def main():
+    # 引数モード: --upload が指定された場合はファイルをパースしてNotionに保存するだけ
+    if len(sys.argv) >= 2 and sys.argv[1] == "--upload":
+        if len(sys.argv) < 3:
+            print("アップロードするMarkdownファイルのパスを指定してください。")
+            return
+        filepath = sys.argv[2]
+        print(f"📄 ファイルを読み込んでいます: {filepath}")
+        try:
+            title, body = read_draft(filepath)
+            save_to_notion(title, body)
+        except Exception as e:
+            print(f"❌ ファイルの読み込みに失敗しました: {e}")
+        return
+
     print("==========================================")
     print("  ✨ 文トレ自動生成アシスタント 起動 ✨  ")
     print("==========================================")
@@ -213,7 +264,8 @@ def main():
         print(f"【本文】:\n{result.get('body', '')}")
         print("===============================\n")
         
-        save_to_notion(result.get('title', ''), result.get('body', ''))
+        # 以前は直接 save_to_notion を呼んでいたが、ここでは下書きファイルに書き出すのみとする
+        save_draft(result.get('title', ''), result.get('body', ''))
 
 if __name__ == "__main__":
     main()
